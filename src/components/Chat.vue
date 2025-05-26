@@ -7,7 +7,12 @@
         <img :src="user.avatarUrl" alt="avatar" class="user-avatar" />
         <span class="user-name">{{ user.displayName }}</span>
       </div>
-      <button @click="$emit('logout')" class="btn-logout">Вийти</button>
+      <div class="header-buttons">
+        <button @click="$emit('edit-profile')" class="btn-profile">
+          Профіль
+        </button>
+        <button @click="$emit('logout')" class="btn-logout">Вийти</button>
+      </div>
     </header>
 
     <!-- Message List -->

@@ -98,3 +98,9 @@ export function subscribeMessages(callback) {
         callback(msgs)
     })
 }
+
+export async function updateUserAvatar(userId, avatarUrl) {
+    const userRef = doc(db, 'users', userId)
+    await updateDoc(userRef, { avatarUrl })
+    return avatarUrl
+}
