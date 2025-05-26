@@ -58,7 +58,7 @@
       </form>
 
       <p class="auth-toggle">
-        <span>{{ isLogin ? 'Немає акаунту?' : 'Вже є акаунт?' }}</span>
+        <span class="highlight">{{ isLogin ? 'Немає акаунту?' : 'Вже є акаунт?' }}</span>
         <button @click="toggleMode" class="toggle-link">
           {{ isLogin ? 'Зареєструватися' : 'Увійти' }}
         </button>
@@ -112,6 +112,12 @@ export default {
 </script>
 
 <style scoped>
+
+.highlight {
+  color: #000000;
+  font-weight: bold;
+}
+
 .auth-container {
   box-sizing: border-box;
   display: flex;

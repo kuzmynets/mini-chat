@@ -13,7 +13,6 @@ import {
 } from 'firebase/firestore'
 import CryptoJS from 'crypto-js'
 
-// ==== твоя конфігурація ====
 const firebaseConfig = {
     apiKey:       import.meta.env.VITE_API_KEY_FIREBASE,
     authDomain:   import.meta.env.VITE_AUTH_DOMAIN,
@@ -27,12 +26,10 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig)
 const db  = getFirestore(app)
 
-// Функція для генерації дефолтної аватарки
 function DEFAULT_AVATAR(id) {
     return `https://i.pravatar.cc/150?u=${id || Date.now()}`
 }
 
-// 1) Ручна реєстрація, без Firebase Storage
 export async function manualSignUp(email, password, displayName) {
     const usersRef = collection(db, 'users')
     const q = query(usersRef, where('email', '==', email))
@@ -58,7 +55,6 @@ export async function manualSignUp(email, password, displayName) {
     }
 }
 
-// 2) Ручний логін
 export async function manualLogin(email, password) {
     const usersRef = collection(db, 'users')
     const q = query(usersRef, where('email', '==', email))
@@ -82,7 +78,6 @@ export async function manualLogin(email, password) {
     }
 }
 
-// 3) Відправка повідомлення
 export async function sendMessage({ userId, displayName, avatarUrl, text }) {
     return addDoc(collection(db, 'messages'), {
         userId,
@@ -93,7 +88,6 @@ export async function sendMessage({ userId, displayName, avatarUrl, text }) {
     })
 }
 
-// 4) Підписка на повідомлення
 export function subscribeMessages(callback) {
     const q = query(
         collection(db, 'messages'),
