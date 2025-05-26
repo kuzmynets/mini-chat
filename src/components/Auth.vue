@@ -1,43 +1,71 @@
+<!-- src/components/Auth.vue -->
 <template>
-  <div class="auth">
-    <h2>{{ isLogin ? 'Увійти' : 'Реєстрація' }}</h2>
-    <form @submit.prevent="handle">
-      <input
-          v-if="!isLogin"
-          v-model="displayName"
-          type="text"
-          placeholder="Ім’я"
-          required
-      />
-      <input
-          v-model="email"
-          type="email"
-          placeholder="Email"
-          required
-      />
-      <input
-          v-model="password"
-          type="password"
-          placeholder="Пароль"
-          required
-      />
-      <input
-          v-if="!isLogin"
-          v-model="confirmPassword"
-          type="password"
-          placeholder="Підтвердіть пароль"
-          required
-      />
-      <button type="submit">
-        {{ isLogin ? 'Увійти' : 'Зареєструватися' }}
-      </button>
-    </form>
-    <p @click="toggleMode" class="toggle">
-      {{ isLogin
-        ? 'Немає акаунту? Зареєструватися'
-        : 'Вже є акаунт? Увійти' }}
-    </p>
-    <p v-if="error" class="error">{{ error }}</p>
+  <div class="auth-container">
+    <div class="auth-card">
+      <h2 class="auth-title">{{ isLogin ? 'Увійти' : 'Реєстрація' }}</h2>
+      <form @submit.prevent="handle" class="auth-form">
+        <div class="form-group" v-if="!isLogin">
+          <label for="displayName" class="form-label">Ім’я</label>
+          <input
+              id="displayName"
+              v-model="displayName"
+              type="text"
+              class="form-input"
+              placeholder="Ваше ім’я"
+              required
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="email" class="form-label">Email</label>
+          <input
+              id="email"
+              v-model="email"
+              type="email"
+              class="form-input"
+              placeholder="you@example.com"
+              required
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="password" class="form-label">Пароль</label>
+          <input
+              id="password"
+              v-model="password"
+              type="password"
+              class="form-input"
+              placeholder="••••••••"
+              required
+          />
+        </div>
+
+        <div class="form-group" v-if="!isLogin">
+          <label for="confirmPassword" class="form-label">Підтвердіть пароль</label>
+          <input
+              id="confirmPassword"
+              v-model="confirmPassword"
+              type="password"
+              class="form-input"
+              placeholder="••••••••"
+              required
+          />
+        </div>
+
+        <button type="submit" class="btn-primary">
+          {{ isLogin ? 'Увійти' : 'Зареєструватися' }}
+        </button>
+      </form>
+
+      <p class="auth-toggle">
+        <span>{{ isLogin ? 'Немає акаунту?' : 'Вже є акаунт?' }}</span>
+        <button @click="toggleMode" class="toggle-link">
+          {{ isLogin ? 'Зареєструватися' : 'Увійти' }}
+        </button>
+      </p>
+
+      <p v-if="error" class="auth-error">{{ error }}</p>
+    </div>
   </div>
 </template>
 
@@ -84,36 +112,79 @@ export default {
 </script>
 
 <style scoped>
-.auth {
-  max-width: 320px;
-  margin: 50px auto;
-  padding: 20px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  text-align: center;
-}
-input {
-  width: 100%;
-  margin: 8px 0;
-  padding: 8px;
+.auth-container {
   box-sizing: border-box;
-}
-button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
   width: 100%;
-  padding: 8px;
+  height: 100%;
+  background: #f0f2f5;
+}
+.auth-card {
+  background: #ffffff;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 400px;
+}
+.auth-title {
+  text-align: center;
+  margin-bottom: 1rem;
+  color: #333;
+  font-size: 1.5rem;
+}
+.auth-form {
+  display: flex;
+  flex-direction: column;
+}
+.form-group {
+  margin-bottom: 1rem;
+}
+.form-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #555;
+  font-size: 0.9rem;
+}
+.form-input {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+.btn-primary {
   background: #42b983;
   color: #fff;
+  padding: 0.75rem;
   border: none;
   border-radius: 4px;
+  font-size: 1rem;
   cursor: pointer;
+  transition: background 0.3s;
 }
-.toggle {
-  margin-top: 12px;
+.btn-primary:hover {
+  background: #369a6e;
+}
+.auth-toggle {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 1rem;
+  font-size: 0.9rem;
+}
+.toggle-link {
+  background: none;
+  border: none;
   color: #42b983;
+  margin-left: 0.5rem;
   cursor: pointer;
 }
-.error {
-  margin-top: 8px;
+.auth-error {
+  margin-top: 1rem;
   color: #e74c3c;
+  text-align: center;
 }
 </style>
