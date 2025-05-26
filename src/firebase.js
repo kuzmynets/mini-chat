@@ -1,3 +1,4 @@
+// src/firebase.js
 import { initializeApp } from 'firebase/app'
 import {
     getFirestore,
@@ -8,16 +9,12 @@ import {
     query,
     where,
     updateDoc,
+    deleteDoc,
     orderBy,
     onSnapshot,
-    serverTimestamp
+    serverTimestamp,
+    arrayUnion
 } from 'firebase/firestore'
-import {
-    getStorage,
-    ref as storageRef,
-    uploadBytes,
-    getDownloadURL
-} from 'firebase/storage'
 import CryptoJS from 'crypto-js'
 
 const firebaseConfig = {
@@ -32,15 +29,16 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig)
 const db  = getFirestore(app)
-const storage = getStorage(app)
 
+// Автовироблена аватарка за замовчуванням
 function DEFAULT_AVATAR(id) {
     return `https://i.pravatar.cc/150?u=${id || Date.now()}`
 }
 
+// Реєстрація користувача
 export async function manualSignUp(email, password, displayName) {
     const usersRef = collection(db, 'users')
-    const q = query(usersRef, where('email','==',email))
+    const q = query(usersRef, where('email', '==', email))
     const existing = await getDocs(q)
     if (!existing.empty) throw new Error('Email уже використовується')
 
@@ -50,6 +48,7 @@ export async function manualSignUp(email, password, displayName) {
         hashedPassword,
         displayName,
         avatarUrl: DEFAULT_AVATAR(),
+        isTyping: false,
         createdAt: serverTimestamp()
     })
 
@@ -61,9 +60,10 @@ export async function manualSignUp(email, password, displayName) {
     }
 }
 
+// Логін користувача
 export async function manualLogin(email, password) {
-    const usersRef = collection(db,'users')
-    const q = query(usersRef, where('email','==',email))
+    const usersRef = collection(db, 'users')
+    const q = query(usersRef, where('email', '==', email))
     const snap = await getDocs(q)
     if (snap.empty) throw new Error('Користувача не знайдено')
 
@@ -80,36 +80,69 @@ export async function manualLogin(email, password) {
     }
 }
 
+// Оновити аватар користувача через URL
 export async function updateUserAvatar(userId, avatarUrl) {
-    const userRef = doc(db,'users',userId)
+    const userRef = doc(db, 'users', userId)
     await updateDoc(userRef, { avatarUrl })
     return avatarUrl
 }
 
-export async function uploadUserAvatarFile(userId, file) {
-    const path = `avatars/${userId}_${Date.now()}`
-    const ref = storageRef(storage, path)
-    await uploadBytes(ref, file)
-    const downloadURL = await getDownloadURL(ref)
-    const userRef = doc(db,'users',userId)
-    await updateDoc(userRef, { avatarUrl: downloadURL })
-    return downloadURL
-}
-
+// Відправка повідомлення з ініціалізацією timestamp і readBy
 export async function sendMessage({ userId, displayName, avatarUrl, text }) {
-    return addDoc(collection(db,'messages'), {
-        userId, displayName, avatarUrl, text,
-        timestamp: serverTimestamp()
+    return addDoc(collection(db, 'messages'), {
+        userId,
+        displayName,
+        avatarUrl,
+        text,
+        timestamp: serverTimestamp(),
+        readBy: []
     })
 }
 
+// Підписка на всі повідомлення, відсортовані за часом
 export function subscribeMessages(cb) {
     const q = query(
-        collection(db,'messages'),
-        orderBy('timestamp','asc')
+        collection(db, 'messages'),
+        orderBy('timestamp', 'asc')
     )
     return onSnapshot(q, snap => {
         const msgs = snap.docs.map(d => ({ id: d.id, ...d.data() }))
         cb(msgs)
+    })
+}
+
+// Позначити повідомлення як прочитане користувачем
+export async function markMessageRead(msgId, readerName) {
+    const msgRef = doc(db, 'messages', msgId)
+    await updateDoc(msgRef, { readBy: arrayUnion(readerName) })
+}
+
+// Оновити текст повідомлення
+export async function updateMessage(msgId, newText) {
+    const msgRef = doc(db, 'messages', msgId)
+    await updateDoc(msgRef, { text: newText, edited: true })
+}
+
+// Видалити повідомлення
+export async function deleteMessage(msgId) {
+    const msgRef = doc(db, 'messages', msgId)
+    await deleteDoc(msgRef)
+}
+
+// Оновити статус "набирає…"
+export async function setUserTyping(userId, isTyping) {
+    const userRef = doc(db, 'users', userId)
+    await updateDoc(userRef, { isTyping })
+}
+
+// Підписка на користувачів, які зараз набирають
+export function subscribeTyping(callback) {
+    const q = query(
+        collection(db, 'users'),
+        where('isTyping', '==', true)
+    )
+    return onSnapshot(q, snap => {
+        const typingUsers = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+        callback(typingUsers)
     })
 }
