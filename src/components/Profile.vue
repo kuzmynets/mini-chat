@@ -1,4 +1,3 @@
-<!-- src/components/Profile.vue -->
 <template>
   <div class="profile-container">
     <div class="profile-card">

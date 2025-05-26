@@ -1,13 +1,12 @@
-<!-- src/components/Chat.vue -->
 <template>
   <div class="chat-container">
     <!-- Header -->
     <header class="chat-header">
       <div class="user-info">
         <button @click="$emit('edit-profile')" class="btn btn-profile">
-        <img :src="user.avatarUrl" alt="avatar" class="user-avatar" />
-        <span class="user-name">{{ user.displayName }}</span>
-          </button>
+          <img :src="user.avatarUrl" alt="avatar" class="user-avatar" />
+          <span class="user-name">{{ user.displayName }}</span>
+        </button>
       </div>
       <div class="header-buttons">
         <button @click="$emit('edit-profile')" class="btn-profile">Профіль</button>
@@ -15,7 +14,6 @@
       </div>
     </header>
 
-    <!-- Message List -->
     <section class="chat-messages" ref="msgContainer">
       <div v-if="messages.length === 0" class="no-messages">
         Тут ще немає повідомлень…
@@ -27,7 +25,7 @@
       >
         <img :src="msg.avatarUrl" alt="avatar" class="message__avatar" />
         <div class="message__content">
-          <!-- Inline Editing -->
+          <div class="message__sender">{{ msg.displayName }}</div>
           <template v-if="editId === msg.id">
             <input
                 v-model="editText"
@@ -49,13 +47,11 @@
             </div>
           </template>
         </div>
-        <!-- Actions for own messages -->
         <div v-if="msg.userId === user.id" class="message__actions">
           <button @click="startEdit(msg)" class="btn-action">✎</button>
           <button @click="remove(msg.id)" class="btn-action">🗑</button>
         </div>
       </div>
-      <!-- Typing Indicator -->
       <div v-if="typingUsers.length" class="typing-indicator">
         <span v-for="(t, i) in typingUsers" :key="t.id">
           {{ t.displayName }}<span v-if="i < typingUsers.length - 1">, </span>
@@ -64,7 +60,6 @@
       </div>
     </section>
 
-    <!-- Input Area -->
     <footer class="chat-input-area">
       <input
           v-model="newText"
@@ -257,12 +252,6 @@ export default {
   display: flex;
   align-items: flex-end;
 }
-.message--other {
-  justify-content: flex-start;
-}
-.message--own {
-  justify-content: flex-end;
-}
 .message__avatar {
   width: 32px;
   height: 32px;
@@ -278,6 +267,12 @@ export default {
 }
 .message--own .message__content {
   background: #daf1ff;
+}
+.message__sender {
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+  color: #4a5568;
 }
 .message__text {
   margin: 0;
@@ -332,7 +327,9 @@ export default {
   border: 1px solid #ccc;
   border-radius: 4px;
 }
-.btn-action, .btn-save, .btn-cancel {
+.btn-action,
+.btn-save,
+.btn-cancel {
   background: none;
   border: none;
   cursor: pointer;

@@ -1,4 +1,3 @@
-<!-- src/components/Auth.vue -->
 <template>
   <div class="auth-container">
     <div class="auth-card">

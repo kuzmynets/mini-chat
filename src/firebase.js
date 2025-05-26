@@ -1,4 +1,3 @@
-// src/firebase.js
 import { initializeApp } from 'firebase/app'
 import {
     getFirestore,
@@ -30,12 +29,10 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig)
 const db  = getFirestore(app)
 
-// Автовироблена аватарка за замовчуванням
 function DEFAULT_AVATAR(id) {
     return `https://i.pravatar.cc/150?u=${id || Date.now()}`
 }
 
-// Реєстрація користувача
 export async function manualSignUp(email, password, displayName) {
     const usersRef = collection(db, 'users')
     const q = query(usersRef, where('email', '==', email))
@@ -60,7 +57,6 @@ export async function manualSignUp(email, password, displayName) {
     }
 }
 
-// Логін користувача
 export async function manualLogin(email, password) {
     const usersRef = collection(db, 'users')
     const q = query(usersRef, where('email', '==', email))
@@ -80,14 +76,12 @@ export async function manualLogin(email, password) {
     }
 }
 
-// Оновити аватар користувача через URL
 export async function updateUserAvatar(userId, avatarUrl) {
     const userRef = doc(db, 'users', userId)
     await updateDoc(userRef, { avatarUrl })
     return avatarUrl
 }
 
-// Відправка повідомлення з ініціалізацією timestamp і readBy
 export async function sendMessage({ userId, displayName, avatarUrl, text }) {
     return addDoc(collection(db, 'messages'), {
         userId,
@@ -99,7 +93,6 @@ export async function sendMessage({ userId, displayName, avatarUrl, text }) {
     })
 }
 
-// Підписка на всі повідомлення, відсортовані за часом
 export function subscribeMessages(cb) {
     const q = query(
         collection(db, 'messages'),
@@ -111,31 +104,26 @@ export function subscribeMessages(cb) {
     })
 }
 
-// Позначити повідомлення як прочитане користувачем
 export async function markMessageRead(msgId, readerName) {
     const msgRef = doc(db, 'messages', msgId)
     await updateDoc(msgRef, { readBy: arrayUnion(readerName) })
 }
 
-// Оновити текст повідомлення
 export async function updateMessage(msgId, newText) {
     const msgRef = doc(db, 'messages', msgId)
     await updateDoc(msgRef, { text: newText, edited: true })
 }
 
-// Видалити повідомлення
 export async function deleteMessage(msgId) {
     const msgRef = doc(db, 'messages', msgId)
     await deleteDoc(msgRef)
 }
 
-// Оновити статус "набирає…"
 export async function setUserTyping(userId, isTyping) {
     const userRef = doc(db, 'users', userId)
     await updateDoc(userRef, { isTyping })
 }
 
-// Підписка на користувачів, які зараз набирають
 export function subscribeTyping(callback) {
     const q = query(
         collection(db, 'users'),
