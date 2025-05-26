@@ -1,16 +1,23 @@
-// src/firebase.js
 import { initializeApp } from 'firebase/app'
 import {
     getFirestore,
     collection,
     addDoc,
+    doc,
+    getDocs,
     query,
     where,
-    getDocs,
+    updateDoc,
     orderBy,
     onSnapshot,
     serverTimestamp
 } from 'firebase/firestore'
+import {
+    getStorage,
+    ref as storageRef,
+    uploadBytes,
+    getDownloadURL
+} from 'firebase/storage'
 import CryptoJS from 'crypto-js'
 
 const firebaseConfig = {
@@ -25,6 +32,7 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig)
 const db  = getFirestore(app)
+const storage = getStorage(app)
 
 function DEFAULT_AVATAR(id) {
     return `https://i.pravatar.cc/150?u=${id || Date.now()}`
@@ -32,14 +40,12 @@ function DEFAULT_AVATAR(id) {
 
 export async function manualSignUp(email, password, displayName) {
     const usersRef = collection(db, 'users')
-    const q = query(usersRef, where('email', '==', email))
+    const q = query(usersRef, where('email','==',email))
     const existing = await getDocs(q)
-    if (!existing.empty) {
-        throw new Error('Користувач із таким email вже існує')
-    }
+    if (!existing.empty) throw new Error('Email уже використовується')
 
     const hashedPassword = CryptoJS.SHA256(password).toString()
-    const userDocRef = await addDoc(usersRef, {
+    const userDoc = await addDoc(usersRef, {
         email,
         hashedPassword,
         displayName,
@@ -48,27 +54,23 @@ export async function manualSignUp(email, password, displayName) {
     })
 
     return {
-        id: userDocRef.id,
+        id: userDoc.id,
         email,
         displayName,
-        avatarUrl: DEFAULT_AVATAR(userDocRef.id)
+        avatarUrl: DEFAULT_AVATAR(userDoc.id)
     }
 }
 
 export async function manualLogin(email, password) {
-    const usersRef = collection(db, 'users')
-    const q = query(usersRef, where('email', '==', email))
+    const usersRef = collection(db,'users')
+    const q = query(usersRef, where('email','==',email))
     const snap = await getDocs(q)
-    if (snap.empty) {
-        throw new Error('Користувача не знайдено')
-    }
+    if (snap.empty) throw new Error('Користувача не знайдено')
 
     const docSnap = snap.docs[0]
     const data = docSnap.data()
     const hashedInput = CryptoJS.SHA256(password).toString()
-    if (hashedInput !== data.hashedPassword) {
-        throw new Error('Неправильний пароль')
-    }
+    if (hashedInput !== data.hashedPassword) throw new Error('Неправильний пароль')
 
     return {
         id: docSnap.id,
@@ -78,29 +80,36 @@ export async function manualLogin(email, password) {
     }
 }
 
+export async function updateUserAvatar(userId, avatarUrl) {
+    const userRef = doc(db,'users',userId)
+    await updateDoc(userRef, { avatarUrl })
+    return avatarUrl
+}
+
+export async function uploadUserAvatarFile(userId, file) {
+    const path = `avatars/${userId}_${Date.now()}`
+    const ref = storageRef(storage, path)
+    await uploadBytes(ref, file)
+    const downloadURL = await getDownloadURL(ref)
+    const userRef = doc(db,'users',userId)
+    await updateDoc(userRef, { avatarUrl: downloadURL })
+    return downloadURL
+}
+
 export async function sendMessage({ userId, displayName, avatarUrl, text }) {
-    return addDoc(collection(db, 'messages'), {
-        userId,
-        displayName,
-        avatarUrl,
-        text,
+    return addDoc(collection(db,'messages'), {
+        userId, displayName, avatarUrl, text,
         timestamp: serverTimestamp()
     })
 }
 
-export function subscribeMessages(callback) {
+export function subscribeMessages(cb) {
     const q = query(
-        collection(db, 'messages'),
-        orderBy('timestamp', 'asc')
+        collection(db,'messages'),
+        orderBy('timestamp','asc')
     )
     return onSnapshot(q, snap => {
         const msgs = snap.docs.map(d => ({ id: d.id, ...d.data() }))
-        callback(msgs)
+        cb(msgs)
     })
-}
-
-export async function updateUserAvatar(userId, avatarUrl) {
-    const userRef = doc(db, 'users', userId)
-    await updateDoc(userRef, { avatarUrl })
-    return avatarUrl
 }

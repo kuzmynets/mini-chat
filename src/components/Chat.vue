@@ -129,6 +129,13 @@ export default {
   font-size: 0.9rem;
 }
 
+.btn-profile{
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
 /* Messages */
 .chat-messages {
   flex: 1;
