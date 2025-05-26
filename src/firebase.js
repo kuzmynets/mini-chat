@@ -1,13 +1,16 @@
 // src/firebase.js
 import { initializeApp } from 'firebase/app'
 import {
-    getFirestore, collection, addDoc, updateDoc, doc,
-    query, where, getDocs,
-    orderBy, onSnapshot, serverTimestamp
+    getFirestore,
+    collection,
+    addDoc,
+    query,
+    where,
+    getDocs,
+    orderBy,
+    onSnapshot,
+    serverTimestamp
 } from 'firebase/firestore'
-import {
-    getStorage, ref as storageRef, uploadBytes, getDownloadURL
-} from 'firebase/storage'
 import CryptoJS from 'crypto-js'
 
 // ==== твоя конфігурація ====
@@ -23,15 +26,14 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig)
 const db  = getFirestore(app)
-const storage = getStorage(app)
 
-// дефолтна аватарка
-const DEFAULT_AVATAR = url =>
-    `https://i.pravatar.cc/150?u=${url || Date.now()}`
+// Функція для генерації дефолтної аватарки
+function DEFAULT_AVATAR(id) {
+    return `https://i.pravatar.cc/150?u=${id || Date.now()}`
+}
 
-// 1) ручна реєстрація
-export async function manualSignUp(email, password, displayName, avatarFile) {
-    // перевірка дублювання
+// 1) Ручна реєстрація, без Firebase Storage
+export async function manualSignUp(email, password, displayName) {
     const usersRef = collection(db, 'users')
     const q = query(usersRef, where('email', '==', email))
     const existing = await getDocs(q)
@@ -39,43 +41,31 @@ export async function manualSignUp(email, password, displayName, avatarFile) {
         throw new Error('Користувач із таким email вже існує')
     }
 
-    // хеш-пароль
     const hashedPassword = CryptoJS.SHA256(password).toString()
-    // додати документ, щоб отримати ID
     const userDocRef = await addDoc(usersRef, {
         email,
         hashedPassword,
         displayName,
-        avatarUrl: DEFAULT_AVATAR(),      // тимчасово дефолт
+        avatarUrl: DEFAULT_AVATAR(),
         createdAt: serverTimestamp()
     })
-    const userId = userDocRef.id
-
-    // якщо є файл аватарки – загрузити і оновити
-    let finalAvatar = DEFAULT_AVATAR(userId)
-    if (avatarFile) {
-        const storagePath = storageRef(storage, `avatars/${userId}`)
-        await uploadBytes(storagePath, avatarFile)
-        finalAvatar = await getDownloadURL(storagePath)
-        await updateDoc(doc(db, 'users', userId), {
-            avatarUrl: finalAvatar
-        })
-    }
 
     return {
-        id: userId,
+        id: userDocRef.id,
         email,
         displayName,
-        avatarUrl: finalAvatar
+        avatarUrl: DEFAULT_AVATAR(userDocRef.id)
     }
 }
 
-// 2) ручний логін
+// 2) Ручний логін
 export async function manualLogin(email, password) {
     const usersRef = collection(db, 'users')
     const q = query(usersRef, where('email', '==', email))
     const snap = await getDocs(q)
-    if (snap.empty) throw new Error('Користувача не знайдено')
+    if (snap.empty) {
+        throw new Error('Користувача не знайдено')
+    }
 
     const docSnap = snap.docs[0]
     const data = docSnap.data()
@@ -92,7 +82,7 @@ export async function manualLogin(email, password) {
     }
 }
 
-// 3) відправка повідомлення
+// 3) Відправка повідомлення
 export async function sendMessage({ userId, displayName, avatarUrl, text }) {
     return addDoc(collection(db, 'messages'), {
         userId,
@@ -103,7 +93,7 @@ export async function sendMessage({ userId, displayName, avatarUrl, text }) {
     })
 }
 
-// 4) підписка на повідомлення
+// 4) Підписка на повідомлення
 export function subscribeMessages(callback) {
     const q = query(
         collection(db, 'messages'),

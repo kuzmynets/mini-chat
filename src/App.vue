@@ -16,19 +16,16 @@ export default {
   setup() {
     const user = ref(null)
 
-    // При старті зчитуємо з localStorage
     onMounted(() => {
       const saved = localStorage.getItem('user')
       if (saved) user.value = JSON.parse(saved)
     })
 
-    // Після успішного логіну/реєстрації
     const handleLogin = u => {
       user.value = u
       localStorage.setItem('user', JSON.stringify(u))
     }
 
-    // Логаут
     const handleLogout = () => {
       user.value = null
       localStorage.removeItem('user')

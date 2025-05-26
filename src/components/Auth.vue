@@ -2,9 +2,25 @@
   <div class="auth">
     <h2>{{ isLogin ? 'Увійти' : 'Реєстрація' }}</h2>
     <form @submit.prevent="handle">
-      <input v-model="displayName" v-if="!isLogin" type="text" placeholder="Ім’я" required />
-      <input v-model="email" type="email" placeholder="Email" required />
-      <input v-model="password" type="password" placeholder="Пароль" required />
+      <input
+          v-if="!isLogin"
+          v-model="displayName"
+          type="text"
+          placeholder="Ім’я"
+          required
+      />
+      <input
+          v-model="email"
+          type="email"
+          placeholder="Email"
+          required
+      />
+      <input
+          v-model="password"
+          type="password"
+          placeholder="Пароль"
+          required
+      />
       <input
           v-if="!isLogin"
           v-model="confirmPassword"
@@ -12,16 +28,14 @@
           placeholder="Підтвердіть пароль"
           required
       />
-      <input
-          v-if="!isLogin"
-          type="file"
-          accept="image/*"
-          @change="onFileChange"
-      />
-      <button type="submit">{{ isLogin ? 'Увійти' : 'Зареєструватися' }}</button>
+      <button type="submit">
+        {{ isLogin ? 'Увійти' : 'Зареєструватися' }}
+      </button>
     </form>
-    <p @click="isLogin = !isLogin" class="toggle">
-      {{ isLogin ? 'Немає акаунту? Зареєструватися' : 'Вже є акаунт? Увійти' }}
+    <p @click="toggleMode" class="toggle">
+      {{ isLogin
+        ? 'Немає акаунту? Зареєструватися'
+        : 'Вже є акаунт? Увійти' }}
     </p>
     <p v-if="error" class="error">{{ error }}</p>
   </div>
@@ -39,13 +53,13 @@ export default {
       email: '',
       password: '',
       confirmPassword: '',
-      avatarFile: null,
       error: ''
     }
   },
   methods: {
-    onFileChange(e) {
-      this.avatarFile = e.target.files[0]
+    toggleMode() {
+      this.isLogin = !this.isLogin
+      this.error = ''
     },
     async handle() {
       this.error = ''
@@ -58,8 +72,7 @@ export default {
             : await manualSignUp(
                 this.email,
                 this.password,
-                this.displayName,
-                this.avatarFile
+                this.displayName
             )
         this.$emit('login', user)
       } catch (e) {
@@ -71,5 +84,36 @@ export default {
 </script>
 
 <style scoped>
-/* твої стилі */
+.auth {
+  max-width: 320px;
+  margin: 50px auto;
+  padding: 20px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  text-align: center;
+}
+input {
+  width: 100%;
+  margin: 8px 0;
+  padding: 8px;
+  box-sizing: border-box;
+}
+button {
+  width: 100%;
+  padding: 8px;
+  background: #42b983;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.toggle {
+  margin-top: 12px;
+  color: #42b983;
+  cursor: pointer;
+}
+.error {
+  margin-top: 8px;
+  color: #e74c3c;
+}
 </style>
