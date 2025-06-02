@@ -77,25 +77,29 @@ export default {
     const convs = ref([])
 
     onMounted(async () => {
+      // Отримуємо всі бесіди, де user є учасником
       const raw = await getUserConversations(props.userId)
       const list = []
 
       for (const c of raw) {
         if (c.type === 'direct') {
+          // Якщо direct, знаходимо іншого учасника
           const parts = await getConversationParticipants(c.id)
           const other = parts.find(p => p.userId !== props.userId)
-          const otherData = await getUserById(other.userId)
-          list.push({
-            id: c.id,
-            type: c.type,
-            name: otherData.displayName,
-            avatarUrl: otherData.avatarUrl
-          })
+          if (other) {
+            const otherData = await getUserById(other.userId)
+            list.push({
+              id: c.id,
+              type: 'direct',
+              name: otherData.displayName,
+              avatarUrl: otherData.avatarUrl
+            })
+          }
         } else {
-          // для групових чатів залишаємо вказане ім’я і аватарку (якщо є)
+          // Для групових чатів просто беремо збережені дані
           list.push({
             id: c.id,
-            type: c.type,
+            type: 'group',
             name: c.name,
             avatarUrl: c.avatarUrl || null
           })

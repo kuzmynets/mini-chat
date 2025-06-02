@@ -157,16 +157,19 @@ export default {
       editId.value = msg.id
       editText.value = msg.text
     }
+
     async function confirmEdit(id) {
       if (editText.value.trim()) {
         await updateMessage(id, editText.value.trim())
       }
       cancelEdit()
     }
+
     function cancelEdit() {
       editId.value = null
       editText.value = ''
     }
+
     async function remove(id) {
       if (confirm('Видалити повідомлення?')) {
         await deleteMessage(id)
@@ -194,7 +197,10 @@ export default {
     }
 
     function formatTime(ts) {
-      const date = ts?.toDate ? ts.toDate() : new Date(ts.seconds * 1000)
+      if (!ts) {
+        return ''
+      }
+      const date = ts.toDate ? ts.toDate() : new Date(ts.seconds * 1000)
       return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     }
 
