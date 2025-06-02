@@ -1,28 +1,39 @@
 <template>
-  <div class="profile-container">
-    <div class="profile-card">
-      <h2 class="profile-title">Редагування профілю</h2>
+  <div class="container d-flex justify-content-center align-items-center vh-100 bg-light">
+    <div class="card p-4" style="max-width: 400px; width: 100%;">
+      <h2 class="card-title text-center mb-4">Редагування профілю</h2>
 
-      <form @submit.prevent="handleSubmit" class="profile-form">
-        <div class="form-group">
+      <form @submit.prevent="handleSubmit">
+        <div class="mb-3">
           <label for="avatarUrl" class="form-label">URL аватарки</label>
           <input
               id="avatarUrl"
               v-model="avatarUrl"
               type="url"
-              class="form-input"
+              class="form-control"
               placeholder="https://example.com/me.png"
               required
           />
         </div>
 
-        <div class="preview" v-if="avatarUrl">
-          <img :src="avatarUrl" alt="Preview" class="preview-img" />
+        <div v-if="avatarUrl" class="mb-3 text-center">
+          <img
+              :src="avatarUrl"
+              alt="Preview"
+              class="rounded-circle"
+              style="width: 150px; height: 150px;"
+          />
         </div>
 
-        <div class="buttons">
-          <button type="submit" class="btn-primary">Зберегти</button>
-          <button type="button" @click="$emit('cancel')" class="btn-secondary">
+        <div class="d-flex justify-content-between">
+          <button type="submit" class="btn btn-primary flex-grow-1 me-2">
+            Зберегти
+          </button>
+          <button
+              type="button"
+              @click="$emit('cancel')"
+              class="btn btn-secondary flex-grow-1"
+          >
             Відмінити
           </button>
         </div>
@@ -56,77 +67,4 @@ export default {
 </script>
 
 <style scoped>
-.profile-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100%;
-  background: var(--color-background-soft);
-}
-.profile-card {
-  background: var(--color-background);
-  padding: 2rem;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  width: 100%;
-  max-width: 400px;
-}
-.profile-title {
-  text-align: center;
-  margin-bottom: 1rem;
-  color: var(--color-heading);
-}
-.profile-form {
-  display: flex;
-  flex-direction: column;
-}
-.form-group {
-  margin-bottom: 1rem;
-}
-.form-label {
-  display: block;
-  margin-bottom: 0.5rem;
-  color: var(--color-text);
-  font-size: 0.9rem;
-}
-.form-input {
-  width: 100%;
-  padding: 0.5rem;
-  border: 1px solid var(--color-border);
-  border-radius: 4px;
-  font-size: 1rem;
-}
-.preview {
-  text-align: center;
-  margin-bottom: 1rem;
-}
-.preview-img {
-  max-width: 100%;
-  max-height: 150px;
-  border-radius: 50%;
-}
-.buttons {
-  display: flex;
-  justify-content: space-between;
-  gap: 0.5rem;
-  margin-top: 1rem;
-}
-.btn-primary {
-  flex: 1;
-  background: var(--vt-c-indigo);
-  color: #fff;
-  border: none;
-  padding: 0.75rem;
-  border-radius: 4px;
-  cursor: pointer;
-}
-.btn-secondary {
-  flex: 1;
-  background: transparent;
-  border: 1px solid var(--vt-c-indigo);
-  color: var(--vt-c-indigo);
-  padding: 0.75rem;
-  border-radius: 4px;
-  cursor: pointer;
-}
 </style>

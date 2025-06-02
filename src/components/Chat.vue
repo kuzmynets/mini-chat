@@ -1,88 +1,112 @@
 <template>
-  <div class="chat-container">
+  <div class="container-fluid p-0 vh-100 d-flex flex-column">
     <!-- Header -->
-    <header class="chat-header">
-      <div class="user-info">
-        <button @click="$emit('edit-profile')" class="btn btn-profile">
-          <img :src="user.avatarUrl" alt="avatar" class="user-avatar" />
-          <span class="user-name">{{ user.displayName }}</span>
-        </button>
+    <header class="d-flex justify-content-between align-items-center bg-white border-bottom px-3 py-2">
+      <div class="d-flex align-items-center">
+        <button @click="$emit('back')" class="btn btn-link p-0 me-2">←</button>
+        <h2 class="h5 mb-0">{{ conversationName }}</h2>
       </div>
-      <div class="header-buttons">
-        <button @click="$emit('edit-profile')" class="btn-profile">Профіль</button>
-        <button @click="$emit('logout')" class="btn-logout">Вийти</button>
+      <div>
+        <button @click="$emit('edit-profile')" class="btn btn-outline-secondary btn-sm me-2">
+          Профіль
+        </button>
+        <button @click="$emit('logout')" class="btn btn-outline-danger btn-sm">
+          Вийти
+        </button>
       </div>
     </header>
 
-    <section class="chat-messages" ref="msgContainer">
-      <div v-if="messages.length === 0" class="no-messages">
+    <!-- Messages -->
+    <div ref="msgContainer" class="flex-grow-1 overflow-auto p-3">
+      <div v-if="messages.length === 0" class="text-center text-muted">
         Тут ще немає повідомлень…
       </div>
       <div
           v-for="msg in messages"
           :key="msg.id"
-          :class="['message', msg.userId === user.id ? 'message--own' : 'message--other']"
+          :class="[
+          'd-flex mb-3',
+          msg.userId === user.id ? 'justify-content-end' : 'justify-content-start'
+        ]"
       >
-        <img :src="msg.avatarUrl" alt="avatar" class="message__avatar" />
-        <div class="message__content">
-          <div class="message__sender">{{ msg.displayName }}</div>
-          <template v-if="editId === msg.id">
-            <input
-                v-model="editText"
-                class="edit-input"
-                @keyup.enter="confirmEdit(msg.id)"
-            />
-            <button @click="confirmEdit(msg.id)" class="btn-save">OK</button>
-            <button @click="cancelEdit" class="btn-cancel">✕</button>
-          </template>
-          <template v-else>
-            <p class="message__text">
-              {{ msg.text }} <span v-if="msg.edited" class="edited-label">(ред.)</span>
-            </p>
-            <div class="message__meta">
-              <small class="meta-time">{{ formatTime(msg.timestamp) }}</small>
-              <small v-if="msg.readBy?.length" class="meta-read">
-                👁 {{ msg.readBy.join(', ') }}
-              </small>
+        <img
+            :src="msg.avatarUrl"
+            class="rounded-circle me-2"
+            alt="avatar"
+            width="40"
+            height="40"
+        />
+
+        <div class="w-100" style="max-width: 70%;">
+          <div
+              :class="[
+              'card',
+              msg.userId === user.id ? 'bg-primary text-white' : 'bg-white text-dark'
+            ]"
+          >
+            <div class="card-body p-2">
+              <div class="fw-bold small mb-1">{{ msg.displayName }}</div>
+
+              <!-- Editing Mode -->
+              <div v-if="editId === msg.id" class="d-flex">
+                <input
+                    v-model="editText"
+                    class="form-control form-control-sm me-1"
+                    @keyup.enter="confirmEdit(msg.id)"
+                />
+                <button @click="confirmEdit(msg.id)" class="btn btn-sm btn-success me-1">OK</button>
+                <button @click="cancelEdit" class="btn btn-sm btn-danger">✕</button>
+              </div>
+
+              <!-- Display Mode -->
+              <div v-else>
+                <p class="mb-1">
+                  {{ msg.text }}
+                  <small v-if="msg.edited" class="fst-italic">(ред.)</small>
+                </p>
+              </div>
+
+              <div class="d-flex justify-content-between small text-muted">
+                <span>{{ formatTime(msg.timestamp) }}</span>
+                <span v-if="msg.readBy?.length">👁 {{ msg.readBy.join(', ') }}</span>
+              </div>
             </div>
-          </template>
+          </div>
         </div>
-        <div v-if="msg.userId === user.id" class="message__actions">
-          <button @click="startEdit(msg)" class="btn-action">✎</button>
-          <button @click="remove(msg.id)" class="btn-action">🗑</button>
+
+        <div v-if="msg.userId === user.id" class="ms-2 d-flex flex-column">
+          <button @click="startEdit(msg)" class="btn btn-sm btn-light mb-1">✎</button>
+          <button @click="remove(msg.id)" class="btn btn-sm btn-light">🗑</button>
         </div>
       </div>
-      <div v-if="typingUsers.length" class="typing-indicator">
+
+      <div v-if="typingUsers.length" class="text-muted fst-italic">
         <span v-for="(t, i) in typingUsers" :key="t.id">
           {{ t.displayName }}<span v-if="i < typingUsers.length - 1">, </span>
         </span>
         {{ typingUsers.length === 1 ? ' набирає...' : ' набирають...' }}
       </div>
-    </section>
+    </div>
 
-    <footer class="chat-input-area">
+    <!-- Input -->
+    <footer class="d-flex p-3 bg-white border-top">
       <input
           v-model="newText"
           @input="onInput"
           @keyup.enter="submit"
           placeholder="Напишіть повідомлення…"
-          class="chat-input"
+          class="form-control me-2"
       />
-      <button @click="submit" class="btn-send">▶</button>
+      <button @click="submit" class="btn btn-primary">▶</button>
     </footer>
   </div>
 </template>
 
 <script>
+import { ref, onMounted, nextTick, onBeforeUnmount } from 'vue'
 import {
-  ref,
-  onMounted,
-  nextTick,
-  onBeforeUnmount
-} from 'vue'
-import {
-  sendMessage,
-  subscribeMessages,
+  sendMessageToConversation,
+  subscribeConversationMessages,
   markMessageRead,
   updateMessage,
   deleteMessage,
@@ -92,18 +116,22 @@ import {
 
 export default {
   name: 'Chat',
-  props: { user: { type: Object, required: true } },
+  props: {
+    user: { type: Object, required: true },
+    conversationId: { type: String, required: true },
+    conversationName: { type: String, required: true }
+  },
   setup(props) {
     const messages = ref([])
     const newText = ref('')
-    const msgContainer = ref(null)
     const editId = ref(null)
     const editText = ref('')
     const typingUsers = ref([])
+    const msgContainer = ref(null)
     let unsubMsgs, unsubTyp
 
     onMounted(() => {
-      unsubMsgs = subscribeMessages(async msgs => {
+      unsubMsgs = subscribeConversationMessages(props.conversationId, async msgs => {
         messages.value = msgs
         for (const msg of msgs) {
           if (!msg.readBy?.includes(props.user.displayName)) {
@@ -111,8 +139,7 @@ export default {
           }
         }
         nextTick(() => {
-          const el = msgContainer.value
-          if (el) el.scrollTop = el.scrollHeight
+          msgContainer.value.scrollTop = msgContainer.value.scrollHeight
         })
       })
       unsubTyp = subscribeTyping(users => {
@@ -126,20 +153,39 @@ export default {
       setUserTyping(props.user.id, false)
     })
 
-    const submit = async () => {
-      const text = newText.value.trim()
-      if (!text) return
-      await sendMessage({
+    function startEdit(msg) {
+      editId.value = msg.id
+      editText.value = msg.text
+    }
+    async function confirmEdit(id) {
+      if (editText.value.trim()) {
+        await updateMessage(id, editText.value.trim())
+      }
+      cancelEdit()
+    }
+    function cancelEdit() {
+      editId.value = null
+      editText.value = ''
+    }
+    async function remove(id) {
+      if (confirm('Видалити повідомлення?')) {
+        await deleteMessage(id)
+      }
+    }
+
+    async function submit() {
+      if (!newText.value.trim()) return
+      await sendMessageToConversation(props.conversationId, {
         userId: props.user.id,
         displayName: props.user.displayName,
         avatarUrl: props.user.avatarUrl,
-        text
+        text: newText.value.trim()
       })
       newText.value = ''
       setUserTyping(props.user.id, false)
     }
 
-    const onInput = () => {
+    function onInput() {
       setUserTyping(props.user.id, true)
       clearTimeout(window.typingTimeout)
       window.typingTimeout = setTimeout(() => {
@@ -147,197 +193,29 @@ export default {
       }, 1000)
     }
 
-    const formatTime = ts => {
+    function formatTime(ts) {
       const date = ts?.toDate ? ts.toDate() : new Date(ts.seconds * 1000)
       return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    }
-
-    const startEdit = msg => {
-      editId.value = msg.id
-      editText.value = msg.text
-    }
-    const confirmEdit = async id => {
-      if (editText.value.trim()) {
-        await updateMessage(id, editText.value)
-      }
-      cancelEdit()
-    }
-    const cancelEdit = () => {
-      editId.value = null
-      editText.value = ''
-    }
-
-    const remove = async id => {
-      if (confirm('Видалити це повідомлення?')) {
-        await deleteMessage(id)
-      }
     }
 
     return {
       messages,
       newText,
-      msgContainer,
       editId,
       editText,
       typingUsers,
-      submit,
-      onInput,
-      formatTime,
+      msgContainer,
       startEdit,
       confirmEdit,
       cancelEdit,
-      remove
+      remove,
+      submit,
+      onInput,
+      formatTime
     }
   }
 }
 </script>
 
 <style scoped>
-.chat-container {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  background: #eef2f5;
-}
-.chat-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.75rem 1rem;
-  background: #ffffff;
-  border-bottom: 1px solid #d1d5db;
-}
-.user-info {
-  display: flex;
-  align-items: center;
-}
-.user-avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  margin-right: 0.5rem;
-}
-.user-name {
-  font-weight: 600;
-  color: #374151;
-}
-.header-buttons {
-  display: flex;
-  gap: 0.5rem;
-}
-.btn-profile,
-.btn-logout {
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  font-size: 0.9rem;
-}
-.btn-logout {
-  color: #ef4444;
-}
-.chat-messages {
-  flex: 1;
-  overflow-y: auto;
-  padding: 1rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-.no-messages {
-  text-align: center;
-  color: #6b7280;
-  margin-top: 2rem;
-}
-.message {
-  display: flex;
-  align-items: flex-end;
-}
-.message__avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  margin: 0 0.5rem;
-}
-.message__content {
-  max-width: 70%;
-  padding: 0.75rem 1rem;
-  border-radius: 16px;
-  background: #ffffff;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-}
-.message--own .message__content {
-  background: #daf1ff;
-}
-.message__sender {
-  font-size: 0.75rem;
-  font-weight: 600;
-  margin-bottom: 0.25rem;
-  color: #4a5568;
-}
-.message__text {
-  margin: 0;
-  color: #111827;
-}
-.message__meta {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 0.25rem;
-  font-size: 0.75rem;
-  color: #6b7280;
-}
-.meta-time {
-  font-style: italic;
-}
-.meta-read {
-  margin-left: 1rem;
-}
-.typing-indicator {
-  font-style: italic;
-  color: #6b7280;
-  padding-left: 1rem;
-}
-.chat-input-area {
-  display: flex;
-  padding: 0.75rem 1rem;
-  background: #ffffff;
-  border-top: 1px solid #d1d5db;
-}
-.chat-input {
-  flex: 1;
-  padding: 0.75rem 1rem;
-  border: 1px solid #d1d5db;
-  border-radius: 9999px;
-  margin-right: 0.5rem;
-  font-size: 1rem;
-}
-.btn-send {
-  background: #1d4ed8;
-  border: none;
-  color: #ffffff;
-  padding: 0 1rem;
-  border-radius: 9999px;
-  cursor: pointer;
-}
-.btn-send:hover {
-  background: #2563eb;
-}
-.edit-input {
-  width: 100%;
-  padding: 0.25rem 0.5rem;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-}
-.btn-action,
-.btn-save,
-.btn-cancel {
-  background: none;
-  border: none;
-  cursor: pointer;
-  margin-left: 0.25rem;
-}
-.edited-label {
-  font-style: italic;
-  font-size: 0.75rem;
-  margin-left: 0.25rem;
-}
 </style>
